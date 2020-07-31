@@ -1,6 +1,6 @@
 {
   "name": "@EricomSoftwareLtd/jpeg-turbo",
-  "version": "0.5.4",
+  "version": "0.5.6",
   "description": "Limited libjpeg-turbo bindings for Node.js.",
   "keywords": [
     "jpeg",
@@ -17,16 +17,23 @@
   "dependencies": {
     "bindings": "^1.5.0",
     "cmake-js": "^6.0.0",
-    "nan": "^2.14.1",
+    "node-addon-api": "^2.0.0",
     "prebuild-install": "^5.3.0"
   },
   "scripts": {
-    "install": "cmake-js compile --target jpegturbo",
-    "prebuild": "prebuild --all --verbose --backend cmake-js -- --target jpegturbo",
+    "install": "prebuild-install -r napi || cmake-js compile --target jpegturbo",
+    "prebuild": "prebuild -r napi --all --verbose --backend cmake-js -- --target jpegturbo",
     "test": "jest"
   },
   "devDependencies": {
     "jest": "^24.8.0",
     "prebuild": "^10.0.0"
+  },
+  "binary": {
+    "napi_versions": [
+      3,
+      4,
+      5
+    ]
   }
 }
