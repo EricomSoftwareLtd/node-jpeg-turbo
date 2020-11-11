@@ -18,3 +18,8 @@ module.exports.decompressSync = function(buffer, optionalOutBuffer, options) {
   out.data = out.data.slice(0, out.size)
   return out
 }
+module.exports.diffArea = function(buffer0, buffer1, diffBufferPrealloc, imageSize) {
+  var out = binding.diffArea(buffer0, buffer1, diffBufferPrealloc, imageSize);
+  if (out) out.diffBuffer = diffBufferPrealloc.slice(0, out.size);
+  return out;
+}
