@@ -3,6 +3,7 @@ using namespace Napi;
 
 Object Init(Env env, Object exports) {
   exports.Set("bufferSize", Function::New(env, BufferSize));
+  exports.Set("diffArea", Function::New(env, DiffArea));
   exports.Set("compressSync", Function::New(env, CompressSync));
   exports.Set("compress", Function::New(env, Compress));
   exports.Set("decompressSync", Function::New(env, DecompressSync));

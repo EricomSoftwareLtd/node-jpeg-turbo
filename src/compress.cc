@@ -347,6 +347,141 @@ Value compressParse(const CallbackInfo& info, bool async) {
   return env.Null();
 }
 
+Value DiffArea(const CallbackInfo& info) {
+  Env env = info.Env();
+  int retval = 0;
+  
+  Object buffer0;
+  uint32_t* img0 = NULL;
+
+  Object buffer1;
+  uint32_t* img1 = NULL;
+
+  Object diffBuffer;
+
+  Object options;
+  Value widthValue;
+  uint32_t width = 0;
+  Value heightValue;
+  uint32_t height = 0;
+
+
+  
+  int x0 = UINT16_MAX,
+      y0 = UINT16_MAX,
+      x1 = 0, y1 = 0;
+
+
+  Object result;
+  int rectWidth, rectHeight;
+  Object rect;
+
+  uint32_t dstBufferLength = 0;
+  unsigned char* dstData = NULL;
+
+  // Parse arguments
+
+  if(info.Length() < 4) {
+    _throw("Too few arguments")
+  }
+
+  buffer0 = info[0].As<Object>();
+  if (!buffer0.IsBuffer()) {
+    _throw("Invalid first buffer");
+  }
+  img0 = (uint32_t*) buffer0.As<Buffer<uint32_t>>().Data();
+
+  buffer1 = info[1].As<Object>();
+  if (!buffer1.IsBuffer()) {
+    _throw("Invalid second buffer");
+  }
+  img1 = (uint32_t*) buffer1.As<Buffer<uint32_t>>().Data();
+
+  diffBuffer = info[2].As<Object>();
+  if (!diffBuffer.IsBuffer()) {
+    _throw("Invalid diff buffer");
+  }
+  dstData = (unsigned char*) diffBuffer.As<Buffer<unsigned char>>().Data();
+
+  options = info[3].As<Object>();
+
+  if (!options.IsObject()) {
+    _throw("Image size must be an object");
+  }
+
+    // Width
+  widthValue = options.Get("width");
+  if (widthValue.IsEmpty() || widthValue.IsUndefined())
+  {
+    _throw("Missing width");
+  }
+  if (!isNapiInt(env, widthValue))
+  {
+    _throw("Invalid width value");
+  }
+  width = widthValue.ToNumber();
+
+  // Height
+  heightValue = options.Get("height");
+  if (heightValue.IsEmpty() || heightValue.IsUndefined()) {
+    _throw("Missing height");
+  }
+  if (!isNapiInt(env, heightValue))
+  {
+    _throw("Invalid height value");
+  }
+  height = heightValue.ToNumber();
+
+
+
+  // Get different Rectangle
+            
+  for (int yc = 0; yc < height; ++yc) {
+      for (int xc = 0; xc < width; ++xc) {
+          int i = yc * width + xc;
+          if (img0[i] != img1[i]) {
+              x0 = std::min(x0, xc); // top left corner
+              y0 = std::min(y0, yc);
+
+              x1 = std::max(x1, xc); // bottom right corner
+              y1 = std::max(y1, yc);
+
+              xc = x1; // we know this line is dirty, so skip to the end of the current dirty rect
+          }
+      }
+  }
+
+
+  if (x0 != UINT16_MAX) { // images not equal
+    rectWidth = x1 - x0 + 1;
+    rectHeight = y1 - y0 + 1;
+
+    result = Object::New(env);
+    rect = Object::New(env);
+    rect.Set("x", x0);
+    rect.Set("y", y0);
+    rect.Set("width", rectWidth);
+    rect.Set("height", rectHeight);
+    
+    dstBufferLength = rectWidth * rectHeight * 4;
+    // manual crop copy line by line
+    for (int yc = y0; yc <= y1; yc++) {
+      memcpy(dstData + (yc - y0) * rectWidth * 4, ((unsigned char*)img1 ) + (yc * width + x0) * 4, rectWidth * 4);
+    }
+
+    result.Set("rect", rect);
+    result.Set("size", dstBufferLength); // buffer will be sliced in index.js from the preallocated diff buffer
+    return result;
+  } 
+
+  bailout:
+  if (retval != 0) {
+    TypeError::New(env, errStr).ThrowAsJavaScriptException();
+  }
+
+  return env.Null();
+}
+
 Value CompressSync(const CallbackInfo& info) {
   return compressParse(info, false);
 }

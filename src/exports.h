@@ -41,6 +41,7 @@ enum {
 };
 
 Napi::Number BufferSize(const Napi::CallbackInfo& info);
+Napi::Value DiffArea(const Napi::CallbackInfo& info);
 Napi::Value CompressSync(const Napi::CallbackInfo& info);
 void Compress(const Napi::CallbackInfo& info);
 Napi::Value DecompressSync(const Napi::CallbackInfo& info);
